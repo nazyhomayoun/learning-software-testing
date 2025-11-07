@@ -1,0 +1,33 @@
+[tool.poetry]
+name="ticketer"
+version="0.0.1"
+description="A sample project to demostrate software testing for the Fundamentals of Software Design Course at Amirkabir University of Technology."
+authors=["Ali Mehrabi <alimehrabi002@gmail.com>"]
+readme="README.md"
+packages=[{include="ticketer"}]
+
+[tool.poetry.dependencies]
+python=">=3.11,<3.12"
+fastapi = "0.121.0"
+uvicorn = "0.38.0"
+sqlalchemy = "2.0.44"
+alembic = "1.17.1"
+pydantic = "^2.12"
+
+[tool.poetry.group.dev.dependencies]
+python=">=3.11,<3.12"
+ruff="^0.14.3"
+ty="^0.0.1a25" # (Optional) You probably don't want to use `ty` as your type-checker as it is not production-ready yet.
+pytest="^8.4.2"
+pytest-mock="^3.15.1"
+pytest-asyncio = "^1.2"
+pytest-cov = "^7.0"
+
+# Ruff configurations can go directly in pyproject.toml
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
