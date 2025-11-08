@@ -12,7 +12,13 @@ fastapi = "0.121.0"
 uvicorn = "0.38.0"
 sqlalchemy = "2.0.44"
 alembic = "1.17.1"
-pydantic = "^2.12"
+pydantic = {version = "^2.12", extras = ["email"]}
+pydantic-settings = "^2.11"
+psycopg = {extras = ["binary"], version = "^3.2.12"}
+python-jose = {version = "^3.5", extras = ["cryptography"]}
+passlib = "^1.7"
+bcrypt = "^5.0"
+python-multipart = "^0.0.20"
 
 [tool.poetry.group.dev.dependencies]
 python=">=3.11,<3.12"
@@ -22,6 +28,8 @@ pytest="^8.4.2"
 pytest-mock="^3.15.1"
 pytest-asyncio = "^1.2"
 pytest-cov = "^7.0"
+httpx = "^0.28"
+factory-boy = "^3.3"
 
 # Ruff configurations can go directly in pyproject.toml
 [tool.ruff]
