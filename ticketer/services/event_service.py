@@ -1,6 +1,6 @@
 """Event service with business logic."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ticketer.models.event import Event
 from ticketer.repositories.event_repository import EventRepository
@@ -10,14 +10,14 @@ from ticketer.repositories.seat_repository import SeatRepository
 def choose_best_seat(seat_repo: SeatRepository, event_id: int) -> dict | None:
     """
     Choose the best available seat for an event.
-    
+
     This is a pure business logic function that can be unit tested.
     Prefers seats in front rows (lower row letters).
-    
+
     Args:
         seat_repo: Seat repository
         event_id: ID of the event
-        
+
     Returns:
         Dictionary with seat info or None if no seats available
     """
@@ -45,9 +45,7 @@ class EventService:
     def __init__(self, event_repo: EventRepository):
         self.event_repo = event_repo
 
-    def create_event(
-        self, venue_id: int, name: str, start_at: datetime, capacity: int
-    ) -> Event:
+    def create_event(self, venue_id: int, name: str, start_at: datetime, capacity: int) -> Event:
         """Create a new event."""
         if capacity <= 0:
             raise ValueError("Capacity must be positive")
@@ -61,7 +59,7 @@ class EventService:
     def check_availability(self, event_id: int, requested_quantity: int) -> bool:
         """
         Check if event has enough available capacity.
-        
+
         This is important business logic for preventing overbooking.
         """
         event = self.event_repo.get_by_id(event_id)
@@ -89,4 +87,3 @@ class EventService:
         if not result:
             raise ValueError("Event not found")
         return result
-

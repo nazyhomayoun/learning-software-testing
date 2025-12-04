@@ -1,6 +1,6 @@
 """Order repository."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Protocol
 
@@ -58,8 +58,7 @@ class SQLAlchemyOrderRepository:
         """Create a new order."""
         order = Order(user_id=user_id, status=OrderStatus.DRAFT, total_price=Decimal("0"))
         self.db.add(order)
-        self.db.commit()
-        self.db.refresh(order)
+        self.db.flush()  # Flush to get ID without committing
         return order
 
     def get_by_id(self, order_id: int) -> Order | None:
@@ -83,8 +82,7 @@ class SQLAlchemyOrderRepository:
             seat_id=seat_id,
         )
         self.db.add(item)
-        self.db.commit()
-        self.db.refresh(item)
+        self.db.flush()  # Flush to get ID without committing
         return item
 
     def update_status(self, order_id: int, status: OrderStatus) -> Order | None:
@@ -92,8 +90,7 @@ class SQLAlchemyOrderRepository:
         order = self.get_by_id(order_id)
         if order:
             order.status = status
-            self.db.commit()
-            self.db.refresh(order)
+            self.db.flush()  # Flush without committing
         return order
 
     def set_expiration(self, order_id: int, expires_at: datetime) -> None:
@@ -101,7 +98,7 @@ class SQLAlchemyOrderRepository:
         order = self.get_by_id(order_id)
         if order:
             order.expires_at = expires_at
-            self.db.commit()
+            self.db.flush()  # Flush without committing
 
     def get_expired_orders(self) -> list[Order]:
         """Get all expired orders that are still held."""
@@ -123,6 +120,5 @@ class SQLAlchemyOrderRepository:
 
         total = sum(item.price for item in order.items)
         order.total_price = total
-        self.db.commit()
+        self.db.flush()  # Flush without committing
         return total
-

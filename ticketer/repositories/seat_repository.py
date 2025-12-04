@@ -60,11 +60,12 @@ class SQLAlchemySeatRepository:
 
     def reserve_seat(self, seat_id: int) -> bool:
         """Reserve a seat. Returns True if successful, False if already reserved."""
-        seat = self.get_by_id(seat_id)
+        # Lock the seat row to prevent race conditions
+        seat = self.db.query(Seat).filter(Seat.id == seat_id).with_for_update().first()
         if not seat or seat.is_reserved:
             return False
         seat.is_reserved = True
-        self.db.commit()
+        self.db.flush()  # Flush without committing
         return True
 
     def release_seat(self, seat_id: int) -> None:
@@ -73,4 +74,3 @@ class SQLAlchemySeatRepository:
         if seat:
             seat.is_reserved = False
             self.db.commit()
-

@@ -23,7 +23,7 @@ python-multipart = "^0.0.20"
 [tool.poetry.group.dev.dependencies]
 python=">=3.11,<3.12"
 ruff="^0.14.3"
-ty="^0.0.1a25" # (Optional) You probably don't want to use `ty` as your type-checker as it is not production-ready yet.
+ty="^0.0.1a25" 
 pytest="^8.4.2"
 pytest-mock="^3.15.1"
 pytest-asyncio = "^1.2"

@@ -21,6 +21,10 @@ class EventRepository(Protocol):
         """Get event by ID."""
         ...
 
+    def get_by_id_with_lock(self, event_id: int) -> Event | None:
+        """Get event by ID with row lock."""
+        ...
+
     def list_all(self, sales_open_only: bool = False) -> list[Event]:
         """List all events."""
         ...
@@ -45,7 +49,11 @@ class SQLAlchemyEventRepository:
     ) -> Event:
         """Create a new event."""
         event = Event(
-            venue_id=venue_id, name=name, start_at=start_at, capacity=capacity, sales_open=sales_open
+            venue_id=venue_id,
+            name=name,
+            start_at=start_at,
+            capacity=capacity,
+            sales_open=sales_open,
         )
         self.db.add(event)
         self.db.commit()
@@ -55,6 +63,18 @@ class SQLAlchemyEventRepository:
     def get_by_id(self, event_id: int) -> Event | None:
         """Get event by ID."""
         return self.db.query(Event).filter(Event.id == event_id).first()
+
+    def get_by_id_with_lock(self, event_id: int) -> Event | None:
+        """Get event by ID with row lock."""
+        from sqlalchemy.orm import lazyload
+
+        return (
+            self.db.query(Event)
+            .options(lazyload(Event.venue))
+            .filter(Event.id == event_id)
+            .with_for_update()
+            .first()
+        )
 
     def list_all(self, sales_open_only: bool = False) -> list[Event]:
         """List all events."""
@@ -87,4 +107,3 @@ class SQLAlchemyEventRepository:
             .count()
         )
         return count
-

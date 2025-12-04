@@ -16,12 +16,12 @@ from ticketer.services.payment_gateway import PaymentGateway
 def calculate_price_with_fees(base_price: Decimal, quantity: int) -> Decimal:
     """
     Calculate total price including fees.
-    
+
     Pure business logic function - easy to unit test.
     Adds 10% service fee.
     """
     subtotal = base_price * quantity
-    fee = subtotal * Decimal("0.10")
+    fee = subtotal * Decimal("0.1")
     return subtotal + fee
 
 
@@ -42,19 +42,17 @@ class OrderService:
         self.payment_gateway = payment_gateway
         self.email_service = email_service
 
-    def create_order_with_hold(
-        self, user_id: int, items: list[dict]
-    ) -> Order:
+    def create_order_with_hold(self, user_id: int, items: list[dict]) -> Order:
         """
         Create an order and place a temporary hold.
-        
+
         Args:
             user_id: ID of the user placing the order
             items: List of dicts with 'event_id', 'quantity', 'ticket_type', optional 'seat_id'
-            
+
         Returns:
             Created order with HELD status
-            
+
         Raises:
             ValueError: If insufficient capacity or sales closed
         """
@@ -69,7 +67,8 @@ class OrderService:
             seat_id = item_data.get("seat_id")
 
             # Check event exists and sales are open
-            event = self.event_repo.get_by_id(event_id)
+            # Lock the event to prevent overbooking race conditions
+            event = self.event_repo.get_by_id_with_lock(event_id)
             if not event:
                 raise ValueError(f"Event {event_id} not found")
             if not event.sales_open:
@@ -104,10 +103,15 @@ class OrderService:
 
         # Calculate total and set hold
         total = self.order_repo.calculate_total(order.id)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.HOLD_EXPIRATION_MINUTES)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.HOLD_EXPIRATION_MINUTES
+        )
 
         self.order_repo.update_status(order.id, OrderStatus.HELD)
         self.order_repo.set_expiration(order.id, expires_at)
+
+        # Commit the entire order creation as one atomic transaction
+        self.order_repo.db.commit()
 
         # Refresh order to get updated data
         order = self.order_repo.get_by_id(order.id)
@@ -119,15 +123,15 @@ class OrderService:
     def confirm_order(self, order_id: int, payment_token: str, db_session) -> Order:
         """
         Confirm an order by processing payment.
-        
+
         Args:
             order_id: ID of the order to confirm
             payment_token: Payment token from client
             db_session: Database session for payment record
-            
+
         Returns:
             Confirmed order
-            
+
         Raises:
             ValueError: If order not found, expired, or payment fails
         """
@@ -198,9 +202,9 @@ class OrderService:
     def release_expired_holds(self) -> int:
         """
         Release all expired order holds.
-        
+
         This would typically run as a background job.
-        
+
         Returns:
             Number of orders released
         """
@@ -216,4 +220,3 @@ class OrderService:
                 pass
 
         return count
-

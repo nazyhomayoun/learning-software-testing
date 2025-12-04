@@ -25,11 +25,13 @@ class OrderStatus(str, enum.Enum):
     CONFIRMED = "CONFIRMED"
     CANCELLED = "CANCELLED"
 
+
 class TicketType(str, enum.Enum):
     """Ticket type enum."""
 
     GENERAL = "GENERAL"
     VIP = "VIP"
+
 
 class Order(Base):
     """Order model."""
@@ -43,9 +45,9 @@ class Order(Base):
     )
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     items: Mapped[list["OrderItem"]] = relationship(
@@ -77,4 +79,3 @@ class OrderItem(Base):
 
     def __repr__(self) -> str:
         return f"<OrderItem(id={self.id}, order_id={self.order_id}, event_id={self.event_id})>"
-
