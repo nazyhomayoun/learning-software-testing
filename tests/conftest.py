@@ -12,13 +12,13 @@ from ticketer.services.email_service import FakeEmailService
 from ticketer.services.payment_gateway import FakePaymentGateway
 
 # Test database URL - use a separate test database
-TEST_DATABASE_URL = "postgresql://postgres:postgres@0.0.0.0:5433/ticketing_test"
+DATABASE_URL = "postgresql://postgres:postgres@0.0.0.0:5433/ticketing_test"
 
 
 @pytest.fixture(scope="session")
 def engine():
     """Create a test database engine for the entire test session."""
-    engine = create_engine(TEST_DATABASE_URL, pool_size=20, max_overflow=10)
+    engine = create_engine(DATABASE_URL, pool_size=20, max_overflow=10)
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)

@@ -1,7 +1,7 @@
 """Database session management."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from ticketer.core.config import settings
 
@@ -15,7 +15,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_db() -> Session:
     """
     Dependency that provides a database session.
-    
+
     Yields:
         Session: SQLAlchemy database session
     """
@@ -24,4 +24,3 @@ def get_db() -> Session:
         yield db
     finally:
         db.close()
-
