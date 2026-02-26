@@ -1,4 +1,4 @@
-"""SQLAlchemy models."""
+"""models/__init__.py - SQLAlchemy models."""
 
 from ticketer.models.event import Event
 from ticketer.models.order import Order, OrderItem, OrderStatus, TicketType

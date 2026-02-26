@@ -1,11 +1,12 @@
 """Pytest configuration and fixtures."""
 
 import os
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from alembic.config import Config
+from alembic import command
 
 from ticketer.api.v1 import deps
 from ticketer.db.base import Base
@@ -13,19 +14,31 @@ from ticketer.main import app
 from ticketer.services.email_service import FakeEmailService
 from ticketer.services.payment_gateway import FakePaymentGateway
 
-# Test database URL - use environment variable with fallback to local test database
+# -----------------------------
+# Test database URL
+# -----------------------------
 DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@0.0.0.0:5433/ticketing_test"),
+    "postgresql://postgres:postgres@localhost:5433/ticketing_test",
 )
 
+# -----------------------------
+# Fixtures
+# -----------------------------
 
 @pytest.fixture(scope="session")
 def engine():
-    """Create a test database engine for the entire test session."""
+    """Create a test database engine for the entire test session and run Alembic migrations."""
     engine = create_engine(DATABASE_URL, pool_size=20, max_overflow=10)
-    Base.metadata.create_all(bind=engine)
+
+    # Run Alembic migrations on test database
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
+    command.upgrade(alembic_cfg, "head")
+
     yield engine
+
+    # Drop all tables after tests
     Base.metadata.drop_all(bind=engine)
 
 
@@ -34,15 +47,15 @@ def db_session(engine):
     """
     Create a new database session for a test with rollback.
 
-    This fixture provides transactional test isolation:
+    This provides transactional test isolation:
     - Each test gets a fresh transaction
     - Changes are rolled back after the test
     - Tests don't interfere with each other
     """
     connection = engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(bind=connection)
-    session = Session()
+    SessionLocal = sessionmaker(bind=connection)
+    session = SessionLocal()
 
     try:
         yield session
@@ -70,12 +83,6 @@ def fake_email_service():
 def client(db_session: Session, fake_payment_gateway, fake_email_service):
     """
     Provide a test client with overridden dependencies.
-
-    This fixture:
-    - Uses the transactional db_session
-    - Injects fake payment gateway
-    - Injects fake email service
-    - Allows API tests to run without external dependencies
     """
 
     def override_get_db():
@@ -109,10 +116,9 @@ def client(db_session: Session, fake_payment_gateway, fake_email_service):
     app.dependency_overrides.clear()
 
 
-# ============================================================================
+# ======================================================================
 # Factory Fixtures
-# ============================================================================
-
+# ======================================================================
 
 @pytest.fixture
 def create_user(db_session: Session):
@@ -147,7 +153,6 @@ def create_venue(db_session: Session):
 def create_event(db_session: Session, create_venue):
     """Factory fixture for creating test events."""
     from datetime import datetime, timedelta, timezone
-
     from ticketer.models.event import Event
 
     def _create_event(

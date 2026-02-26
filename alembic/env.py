@@ -26,7 +26,7 @@ from ticketer.models import (  # noqa
 config = context.config
 
 # Override sqlalchemy.url with the one from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.TEST_DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

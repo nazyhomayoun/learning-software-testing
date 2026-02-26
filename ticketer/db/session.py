@@ -1,4 +1,4 @@
-"""Database session management."""
+"""app/db/session.py - Database session management."""
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
